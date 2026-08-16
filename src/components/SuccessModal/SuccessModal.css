@@ -1,0 +1,11 @@
+.modal__title_type_success {
+  max-width: 330px;
+  margin-bottom: 14px;
+}
+
+.modal__alt-button_type_success {
+  display: block;
+  text-align: left;
+  font-size: 18px;
+  line-height: 22px;
+}

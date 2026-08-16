@@ -1,0 +1,155 @@
+.modal {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+
+.modal_open {
+  visibility: visible;
+  opacity: 1;
+}
+
+.modal__container {
+  position: relative;
+  width: 430px;
+  padding: 34px 36px 28px;
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modal__close-button {
+  position: absolute;
+  top: -45px;
+  right: -45px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent center no-repeat url('../../images/close.svg');
+}
+
+.modal__title {
+  margin: 0 0 22px;
+  font-weight: 900;
+  font-size: 24px;
+  line-height: 28px;
+}
+
+.modal__form {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal__label {
+  margin-bottom: 9px;
+  font-size: 12px;
+  line-height: 15px;
+  color: #2f71e5;
+}
+
+.modal__input {
+  padding: 0 0 9px;
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  font-family: 'Inter', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 17px;
+  color: #1a1b22;
+}
+
+.modal__input::placeholder {
+  color: #b6bcbf;
+}
+
+.modal__input:focus {
+  outline: none;
+  border-bottom-color: #2f71e5;
+}
+
+.modal__input-error {
+  display: block;
+  min-height: 14px;
+  margin: 4px 0 13px;
+  font-size: 12px;
+  line-height: 14px;
+  color: #f00;
+}
+
+.modal__submit-error {
+  display: block;
+  min-height: 16px;
+  margin: 6px 0;
+  text-align: center;
+  font-size: 12px;
+  line-height: 14px;
+  color: #f00;
+}
+
+.modal__submit-button {
+  height: 64px;
+  border: none;
+  border-radius: 100px;
+  background-color: #2f71e5;
+  color: #fff;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 24px;
+  transition: background-color 0.2s;
+}
+
+.modal__submit-button:hover:enabled {
+  background-color: #347eff;
+}
+
+.modal__submit-button:active:enabled {
+  background-color: #2a65cc;
+}
+
+.modal__submit-button:disabled {
+  background-color: #e6e8eb;
+  color: #b6bcbf;
+  cursor: default;
+}
+
+.modal__alt-text {
+  margin: 16px 0 0;
+  text-align: center;
+  font-size: 14px;
+  line-height: 17px;
+}
+
+.modal__alt-button {
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 14px;
+  line-height: 17px;
+  color: #2f71e5;
+}
+
+@media (max-width: 767px) {
+  .modal {
+    align-items: flex-end;
+  }
+
+  .modal__container {
+    width: 100%;
+    padding: 16px 16px 24px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .modal__close-button {
+    top: -44px;
+    right: 6px;
+  }
+}

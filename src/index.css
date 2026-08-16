@@ -1,0 +1,33 @@
+body {
+  margin: 0;
+  font-family: 'Roboto', -apple-system, 'Segoe UI', Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.375;
+  color: #1a1b22;
+  background-color: #fff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+button {
+  padding: 0;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input {
+  font-family: inherit;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #2f71e5;
+  outline-offset: 2px;
+}

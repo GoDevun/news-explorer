@@ -1,0 +1,30 @@
+.page {
+  min-width: 320px;
+  max-width: 1440px;
+  min-height: 100vh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  min-height: 576px;
+  background-image: linear-gradient(rgba(26, 27, 34, 0.72), rgba(26, 27, 34, 0.72)),
+    url('../../images/hero-bg.jpg');
+  background-size: cover;
+  background-position: center;
+}
+
+@media (max-width: 1279px) {
+  .hero {
+    min-height: 400px;
+  }
+}
+
+@media (max-width: 767px) {
+  .hero {
+    min-height: 536px;
+  }
+}
