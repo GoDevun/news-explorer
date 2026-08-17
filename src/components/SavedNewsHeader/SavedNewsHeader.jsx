@@ -19,7 +19,7 @@ function SavedNewsHeader({ currentUser, savedArticles }) {
         <p className="saved-header__keywords">
           By keywords:{' '}
           <span className="saved-header__keywords-accent">
-            {mainKeywords}
+            <span className="saved-header__keywords-list">{mainKeywords}</span>
             {extraKeywordCount > 0 && `, and ${extraKeywordCount} other`}
           </span>
         </p>

@@ -27,6 +27,11 @@
 
 .saved-header__keywords-accent {
   font-weight: 700;
+}
+
+/* Only the keywords themselves are capitalized; the trailing
+   "and N other" stays lowercase as in the design. */
+.saved-header__keywords-list {
   text-transform: capitalize;
 }
 
