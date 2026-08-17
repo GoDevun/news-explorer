@@ -1,10 +1,10 @@
-import authorPhoto from '../../images/author.svg';
+import authorPhoto from '../../images/author.jpg';
 import './About.css';
 
 function About() {
   return (
     <section className="about">
-      <img className="about__photo" src={authorPhoto} alt="Author of the project" />
+      <img className="about__photo" src={authorPhoto} alt="Devun Cooksey, author of the project" />
       <div className="about__info">
         <h2 className="about__title">About the author</h2>
         <p className="about__text">

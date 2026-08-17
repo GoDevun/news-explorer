@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import githubIcon from '../../images/github.svg';
-import facebookIcon from '../../images/facebook.svg';
+import linkedinIcon from '../../images/linkedin.svg';
 import './Footer.css';
 
 function Footer() {
@@ -31,7 +31,7 @@ function Footer() {
           <li className="footer__socials-item">
             <a
               className="footer__social-link"
-              href="https://github.com"
+              href="https://github.com/GoDevun"
               target="_blank"
               rel="noreferrer"
               aria-label="GitHub"
@@ -42,15 +42,15 @@ function Footer() {
           <li className="footer__socials-item">
             <a
               className="footer__social-link"
-              href="https://www.facebook.com"
+              href="https://www.linkedin.com/in/devun-cooksey-b49705271"
               target="_blank"
               rel="noreferrer"
-              aria-label="Facebook"
+              aria-label="LinkedIn"
             >
               <img
                 className="footer__social-icon"
-                src={facebookIcon}
-                alt="Facebook"
+                src={linkedinIcon}
+                alt="LinkedIn"
               />
             </a>
           </li>
