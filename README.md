@@ -7,7 +7,10 @@ application that lets users search recent news articles by keyword through the
 ## Live demo
 
 - **Frontend:** https://godevun.github.io/news-explorer/
-- **Project walkthrough (video):** _link to be added_
+
+<!-- TODO: after recording the pitch video, uncomment this line and paste the URL.
+- **Project walkthrough (video):** PASTE_VIDEO_URL_HERE
+-->
 
 ## Features
 
