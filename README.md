@@ -6,7 +6,8 @@ application that lets users search recent news articles by keyword through the
 
 ## Live demo
 
-- **Frontend:** _deployment link to be added_
+- **Frontend:** https://godevun.github.io/news-explorer/
+- **Project walkthrough (video):** _link to be added_
 
 ## Features
 
@@ -38,7 +39,7 @@ application that lets users search recent news articles by keyword through the
 ```
 src/
 ├── components/     JSX components, each with its own CSS file
-├── hooks/          useFormWithValidation, useEscapeClose
+├── hooks/          useFormWithValidation, useModalClose
 ├── images/         SVG icons and raster assets
 ├── utils/          constants, News API client, simulated backend, date helpers
 └── vendor/         normalize.css and @font-face declarations

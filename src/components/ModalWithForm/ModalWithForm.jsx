@@ -1,4 +1,4 @@
-import { useEscapeClose } from '../../hooks/useEscapeClose';
+import { useModalClose } from '../../hooks/useModalClose';
 import './ModalWithForm.css';
 
 function ModalWithForm({
@@ -14,19 +14,10 @@ function ModalWithForm({
   onAltClick,
   children,
 }) {
-  useEscapeClose(isOpen, onClose);
-
-  const handleOverlayMouseDown = (event) => {
-    if (event.target === event.currentTarget) {
-      onClose();
-    }
-  };
+  useModalClose(isOpen, onClose);
 
   return (
-    <div
-      className={`modal ${isOpen ? 'modal_open' : ''}`}
-      onMouseDown={handleOverlayMouseDown}
-    >
+    <div className={`modal ${isOpen ? 'modal_open' : ''}`}>
       <div className="modal__container">
         <button
           className="modal__close-button"

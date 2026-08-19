@@ -4,6 +4,7 @@ import Header from '../Header/Header';
 import SearchForm from '../SearchForm/SearchForm';
 import Main from '../Main/Main';
 import SavedNews from '../SavedNews/SavedNews';
+import ProtectedRoute from '../ProtectedRoute/ProtectedRoute';
 import Footer from '../Footer/Footer';
 import LoginModal from '../LoginModal/LoginModal';
 import RegisterModal from '../RegisterModal/RegisterModal';
@@ -20,6 +21,7 @@ import './App.css';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [activeModal, setActiveModal] = useState('');
   const [authError, setAuthError] = useState('');
@@ -45,7 +47,10 @@ function App() {
           setCurrentUser(user);
           setIsLoggedIn(true);
         })
-        .catch(() => localStorage.removeItem(JWT_STORAGE_KEY));
+        .catch(() => localStorage.removeItem(JWT_STORAGE_KEY))
+        .finally(() => setIsAuthChecking(false));
+    } else {
+      setIsAuthChecking(false);
     }
 
     fakeApi
@@ -195,7 +200,11 @@ function App() {
             onSaveClick={handleSaveArticle}
           />
         </Route>
-        <Route path="/saved-news">
+        <ProtectedRoute
+          path="/saved-news"
+          isLoggedIn={isLoggedIn}
+          isAuthChecking={isAuthChecking}
+        >
           <Header
             theme="light"
             isLoggedIn={isLoggedIn}
@@ -208,7 +217,7 @@ function App() {
             savedArticles={savedArticles}
             onDeleteClick={handleDeleteArticle}
           />
-        </Route>
+        </ProtectedRoute>
       </Switch>
       <Footer />
       <LoginModal

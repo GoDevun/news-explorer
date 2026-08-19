@@ -6,7 +6,7 @@ function SavedNews({ currentUser, savedArticles, onDeleteClick }) {
   return (
     <main className="saved-news">
       <SavedNewsHeader currentUser={currentUser} savedArticles={savedArticles} />
-      <section className="saved-news__cards" aria-label="Saved articles">
+      <div className="saved-news__cards">
         {savedArticles.length > 0 ? (
           <NewsCardList
             articles={savedArticles}
@@ -18,7 +18,7 @@ function SavedNews({ currentUser, savedArticles, onDeleteClick }) {
             You haven&apos;t saved any articles yet.
           </p>
         )}
-      </section>
+      </div>
     </main>
   );
 }

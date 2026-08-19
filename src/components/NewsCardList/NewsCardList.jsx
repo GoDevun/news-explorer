@@ -12,7 +12,10 @@ function NewsCardList({
   onShowMore,
 }) {
   return (
-    <div className="cards">
+    <section
+      className="cards"
+      aria-label={mode === 'saved' ? 'Saved articles' : undefined}
+    >
       {mode === 'search' && <h2 className="cards__title">Search results</h2>}
       <ul className="cards__list">
         {articles.map((article) => (
@@ -35,7 +38,7 @@ function NewsCardList({
           Show more
         </button>
       )}
-    </div>
+    </section>
   );
 }
 
