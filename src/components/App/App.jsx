@@ -259,7 +259,7 @@ function App() {
             onSaveClick={handleSaveArticle}
           />
         </Route>
-        <Route path="/stocks">
+        <Route path="/stock-news-sentiment">
           <div className="hero">
             <Header
               theme="dark"

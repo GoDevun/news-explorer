@@ -3,7 +3,7 @@
 Final project for the TripleTen Software Engineering program. NewsExplorer is a React
 application that lets users search recent news articles by keyword through the
 [News API](https://newsapi.org) and save the ones they care about to a personal account.
-A `/stocks` page extends the same idea to the market: enter a ticker and the app reads a
+A Stock News Sentiment page extends the same idea to the market: enter a ticker and the app reads a
 bullish or bearish signal from live quotes, analyst ratings and recent company headlines
 via [Finnhub](https://finnhub.io).
 
@@ -32,9 +32,9 @@ via [Finnhub](https://finnhub.io).
 - Two header states — a "Sign in" button when signed out, and the username plus a
   "Saved articles" link when signed in.
 
-### Stock signals
+### Stock News Sentiment
 
-- A `/stocks` page that takes a ticker (or one of the quick-pick chips) and returns a
+- A `/stock-news-sentiment` page that takes a ticker (or one of the quick-pick chips) and returns a
   quote card: price, day change, open, previous close, day range, market cap and a
   marker showing where the price sits in its 52-week range.
 - A bullish/bearish reading scored from -1 to +1 out of five weighted factors — 52-week
@@ -125,7 +125,7 @@ automatically in `src/utils/constants.js`.
 
 ## A note on the market data API
 
-Finnhub serves browser requests with `Access-Control-Allow-Origin: *`, so the stocks page
+Finnhub serves browser requests with `Access-Control-Allow-Origin: *`, so the page
 calls it directly in both development and production — no proxy needed. The free tier
 allows 60 calls a minute and one ticker lookup costs five, so a rapid burst of searches
 returns a rate-limit message rather than data.

@@ -37,12 +37,12 @@ function Navigation({
           </li>
           <li className="nav__item">
             <NavLink
-              to="/stocks"
+              to="/stock-news-sentiment"
               className="nav__link"
               activeClassName="nav__link_active"
               onClick={onCloseMenu}
             >
-              Stocks
+              Stock News Sentiment
             </NavLink>
           </li>
           {isLoggedIn && (
