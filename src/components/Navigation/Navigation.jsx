@@ -35,6 +35,16 @@ function Navigation({
               Home
             </NavLink>
           </li>
+          <li className="nav__item">
+            <NavLink
+              to="/stocks"
+              className="nav__link"
+              activeClassName="nav__link_active"
+              onClick={onCloseMenu}
+            >
+              Stocks
+            </NavLink>
+          </li>
           {isLoggedIn && (
             <li className="nav__item">
               <NavLink

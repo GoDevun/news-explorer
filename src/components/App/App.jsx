@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { Route, Switch, useHistory } from 'react-router-dom';
 import Header from '../Header/Header';
 import SearchForm from '../SearchForm/SearchForm';
+import StockSearchForm from '../StockSearchForm/StockSearchForm';
 import Main from '../Main/Main';
+import Stocks from '../Stocks/Stocks';
 import SavedNews from '../SavedNews/SavedNews';
 import ProtectedRoute from '../ProtectedRoute/ProtectedRoute';
 import Footer from '../Footer/Footer';
@@ -11,11 +13,17 @@ import RegisterModal from '../RegisterModal/RegisterModal';
 import SuccessModal from '../SuccessModal/SuccessModal';
 import * as fakeApi from '../../utils/fakeApi';
 import { getNews } from '../../utils/newsApi';
+import { getStockOverview, STOCK_ERROR_KINDS } from '../../utils/stocksApi';
+import { buildStockSignal } from '../../utils/stockSignal';
 import {
   CARDS_PER_PAGE,
   JWT_STORAGE_KEY,
   LAST_SEARCH_STORAGE_KEY,
+  LAST_TICKER_STORAGE_KEY,
+  MISSING_STOCK_KEY_ERROR_MESSAGE,
   SEARCH_ERROR_MESSAGE,
+  STOCK_ERROR_MESSAGE,
+  STOCK_RATE_LIMIT_ERROR_MESSAGE,
 } from '../../utils/constants';
 import './App.css';
 
@@ -33,6 +41,15 @@ function App() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
   const [visibleCount, setVisibleCount] = useState(CARDS_PER_PAGE);
+
+  const [ticker, setTicker] = useState('');
+  const [stock, setStock] = useState(null);
+  const [stockSignal, setStockSignal] = useState(null);
+  const [hasTickerSearched, setHasTickerSearched] = useState(false);
+  const [isStockLoading, setIsStockLoading] = useState(false);
+  const [stockError, setStockError] = useState('');
+  const [isTickerNotFound, setIsTickerNotFound] = useState(false);
+  const [stockVisibleCount, setStockVisibleCount] = useState(CARDS_PER_PAGE);
 
   const [savedArticles, setSavedArticles] = useState([]);
 
@@ -68,6 +85,11 @@ function App() {
     } catch {
       localStorage.removeItem(LAST_SEARCH_STORAGE_KEY);
     }
+
+    const lastTicker = localStorage.getItem(LAST_TICKER_STORAGE_KEY);
+    if (lastTicker) {
+      setTicker(lastTicker);
+    }
   }, []);
 
   const closeModal = useCallback(() => {
@@ -98,6 +120,43 @@ function App() {
   };
 
   const handleShowMore = () => setVisibleCount((count) => count + CARDS_PER_PAGE);
+
+  const handleTickerSearch = (searchTicker) => {
+    setHasTickerSearched(true);
+    setIsStockLoading(true);
+    setStockError('');
+    setIsTickerNotFound(false);
+    setStockVisibleCount(CARDS_PER_PAGE);
+    setTicker(searchTicker);
+    setStock(null);
+    setStockSignal(null);
+
+    getStockOverview(searchTicker)
+      .then((overview) => {
+        setStock(overview);
+        setStockSignal(buildStockSignal(overview));
+        localStorage.setItem(LAST_TICKER_STORAGE_KEY, overview.ticker);
+      })
+      .catch((error) => {
+        if (error.kind === STOCK_ERROR_KINDS.notFound) {
+          setIsTickerNotFound(true);
+          return;
+        }
+        if (error.kind === STOCK_ERROR_KINDS.missingKey) {
+          setStockError(MISSING_STOCK_KEY_ERROR_MESSAGE);
+          return;
+        }
+        if (error.kind === STOCK_ERROR_KINDS.rateLimit) {
+          setStockError(STOCK_RATE_LIMIT_ERROR_MESSAGE);
+          return;
+        }
+        setStockError(STOCK_ERROR_MESSAGE);
+      })
+      .finally(() => setIsStockLoading(false));
+  };
+
+  const handleStockShowMore = () =>
+    setStockVisibleCount((count) => count + CARDS_PER_PAGE);
 
   const handleRegister = (formValues) => {
     setIsSubmitting(true);
@@ -146,7 +205,7 @@ function App() {
       .catch(console.error);
   };
 
-  const handleSaveArticle = (article) => {
+  const handleSaveArticle = (article, articleKeyword = keyword) => {
     if (!isLoggedIn) {
       setActiveModal('register');
       return;
@@ -157,7 +216,7 @@ function App() {
       return;
     }
     fakeApi
-      .saveArticle(article, keyword)
+      .saveArticle(article, articleKeyword)
       .then((savedArticle) =>
         setSavedArticles((articlesList) => [...articlesList, savedArticle])
       )
@@ -198,6 +257,31 @@ function App() {
             isLoggedIn={isLoggedIn}
             savedArticles={savedArticles}
             onSaveClick={handleSaveArticle}
+          />
+        </Route>
+        <Route path="/stocks">
+          <div className="hero">
+            <Header
+              theme="dark"
+              isLoggedIn={isLoggedIn}
+              currentUser={currentUser}
+              onSignInClick={openLoginModal}
+              onLogout={handleLogout}
+            />
+            <StockSearchForm onSearch={handleTickerSearch} initialTicker={ticker} />
+          </div>
+          <Stocks
+            hasSearched={hasTickerSearched}
+            isLoading={isStockLoading}
+            error={stockError}
+            isNotFound={isTickerNotFound}
+            stock={stock}
+            signal={stockSignal}
+            visibleCount={stockVisibleCount}
+            onShowMore={handleStockShowMore}
+            isLoggedIn={isLoggedIn}
+            savedArticles={savedArticles}
+            onSaveClick={(article) => handleSaveArticle(article, ticker)}
           />
         </Route>
         <ProtectedRoute

@@ -143,6 +143,38 @@
   white-space: nowrap;
 }
 
+.news-card__tone {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 10px;
+  font-family: 'Inter', Arial, sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 24px;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.news-card__tone_type_bullish {
+  background-color: #e3f4ee;
+  color: #12805c;
+}
+
+.news-card__tone_type_bearish {
+  background-color: #fbe4e4;
+  color: #d00000;
+}
+
+.news-card__tone_type_neutral {
+  background-color: #fff;
+  color: #62666d;
+}
+
 @media (max-width: 1279px) {
   .news-card__image {
     height: 150px;

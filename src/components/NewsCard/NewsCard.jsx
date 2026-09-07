@@ -2,7 +2,15 @@ import { formatDisplayDate } from '../../utils/date';
 import noImagePlaceholder from '../../images/no-image.svg';
 import './NewsCard.css';
 
-function NewsCard({ article, mode, isLoggedIn, isSaved, onSaveClick, onDeleteClick }) {
+function NewsCard({
+  article,
+  mode,
+  tone,
+  isLoggedIn,
+  isSaved,
+  onSaveClick,
+  onDeleteClick,
+}) {
   const isSearchMode = mode === 'search';
 
   const handleImageError = (event) => {
@@ -30,6 +38,9 @@ function NewsCard({ article, mode, isLoggedIn, isSaved, onSaveClick, onDeleteCli
           <p className="news-card__source">{article.source && article.source.name}</p>
         </div>
       </a>
+      {isSearchMode && tone && (
+        <span className={`news-card__tone news-card__tone_type_${tone}`}>{tone}</span>
+      )}
       {isSearchMode ? (
         <>
           <button

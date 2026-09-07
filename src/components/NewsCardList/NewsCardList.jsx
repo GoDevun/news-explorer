@@ -4,6 +4,8 @@ import './NewsCardList.css';
 function NewsCardList({
   articles,
   mode,
+  title = 'Search results',
+  tones,
   isLoggedIn,
   savedArticles = [],
   onSaveClick,
@@ -16,13 +18,14 @@ function NewsCardList({
       className="cards"
       aria-label={mode === 'saved' ? 'Saved articles' : undefined}
     >
-      {mode === 'search' && <h2 className="cards__title">Search results</h2>}
+      {mode === 'search' && <h2 className="cards__title">{title}</h2>}
       <ul className="cards__list">
         {articles.map((article) => (
           <NewsCard
             key={article._id || article.url}
             article={article}
             mode={mode}
+            tone={tones && tones[article.url]}
             isLoggedIn={isLoggedIn}
             isSaved={
               mode === 'search' &&

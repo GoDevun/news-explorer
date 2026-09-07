@@ -1,0 +1,166 @@
+.stock-search {
+  position: relative;
+  width: 100%;
+  max-width: 608px;
+  margin: 0 auto;
+  padding: 80px 0;
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+}
+
+.stock-search__title {
+  margin: 0 0 32px;
+  font-family: 'Roboto Slab', Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  font-size: 60px;
+  line-height: 64px;
+}
+
+.stock-search__subtitle {
+  margin: 0 0 88px;
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.stock-search__form {
+  position: relative;
+  width: 100%;
+}
+
+.stock-search__input {
+  width: 100%;
+  height: 64px;
+  padding: 0 190px 0 24px;
+  border: none;
+  border-radius: 100px;
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #1a1b22;
+}
+
+.stock-search__input::placeholder {
+  letter-spacing: normal;
+  text-transform: none;
+  color: #b6bcbf;
+}
+
+.stock-search__button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 168px;
+  height: 64px;
+  border: none;
+  border-radius: 100px;
+  background-color: #2f71e5;
+  color: #fff;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 24px;
+  transition: background-color 0.2s;
+}
+
+.stock-search__button:hover {
+  background-color: #347eff;
+}
+
+.stock-search__button:active {
+  background-color: #2a65cc;
+}
+
+.stock-search__error {
+  display: block;
+  min-height: 20px;
+  margin-top: 8px;
+  padding-left: 24px;
+  font-size: 14px;
+  line-height: 18px;
+  color: #ff6b6b;
+}
+
+.stock-search__popular {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stock-search__chip {
+  height: 34px;
+  padding: 0 18px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 100px;
+  background-color: transparent;
+  color: #fff;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 18px;
+  letter-spacing: 0.4px;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.stock-search__chip:hover {
+  border-color: #fff;
+  background-color: rgba(255, 255, 255, 0.16);
+}
+
+@media (max-width: 1279px) {
+  .stock-search {
+    max-width: 448px;
+    padding: 38px 0 48px;
+  }
+
+  .stock-search__title {
+    margin-bottom: 16px;
+    font-size: 36px;
+    line-height: 40px;
+  }
+
+  .stock-search__subtitle {
+    margin-bottom: 48px;
+  }
+
+  .stock-search__input {
+    height: 56px;
+    padding-right: 176px;
+  }
+
+  .stock-search__button {
+    width: 160px;
+    height: 56px;
+  }
+}
+
+@media (max-width: 767px) {
+  .stock-search {
+    max-width: 100%;
+    padding: 30px 16px 32px;
+  }
+
+  .stock-search__form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .stock-search__input {
+    height: 56px;
+    padding: 0 16px;
+  }
+
+  .stock-search__button {
+    position: static;
+    width: 100%;
+    height: 56px;
+  }
+
+  .stock-search__error {
+    padding-left: 16px;
+  }
+}
