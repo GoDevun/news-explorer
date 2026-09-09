@@ -27,13 +27,30 @@ const requestWithTimeout = async (url) => {
   }
 };
 
+/**
+ * Marketaux reports the daily budget as `limit` plus `remaining`; some
+ * responses carry `used` instead, so derive whichever half is missing.
+ */
 const readQuota = (response) => {
   const limit = Number(response.headers.get('x-usagelimit-limit'));
-  const used = Number(response.headers.get('x-usagelimit-used'));
-  if (!Number.isFinite(limit) || !Number.isFinite(used)) {
+  const remainingHeader = response.headers.get('x-usagelimit-remaining');
+  const usedHeader = response.headers.get('x-usagelimit-used');
+
+  if (!Number.isFinite(limit)) {
     return null;
   }
-  return { limit, used, remaining: Math.max(0, limit - used) };
+
+  if (remainingHeader !== null && Number.isFinite(Number(remainingHeader))) {
+    const remaining = Number(remainingHeader);
+    return { limit, used: Math.max(0, limit - remaining), remaining };
+  }
+
+  if (usedHeader !== null && Number.isFinite(Number(usedHeader))) {
+    const used = Number(usedHeader);
+    return { limit, used, remaining: Math.max(0, limit - used) };
+  }
+
+  return null;
 };
 
 const fetchPage = async (symbol, page) => {
@@ -90,6 +107,23 @@ const findEntity = (raw, symbol) => {
   );
 };
 
+/**
+ * The sentiment of the entity where it appears in the headline, if the
+ * provider highlighted it there. This is what makes a headline-level label
+ * possible rather than an article-wide one.
+ */
+const findTitleSentiment = (entity) => {
+  if (!entity || !Array.isArray(entity.highlights)) {
+    return null;
+  }
+  const titleHighlight = entity.highlights.find(
+    (highlight) => highlight && highlight.highlighted_in === 'title'
+  );
+  return titleHighlight && typeof titleHighlight.sentiment === 'number'
+    ? titleHighlight.sentiment
+    : null;
+};
+
 const trimText = (value, maxLength) => {
   if (typeof value !== 'string') {
     return '';
@@ -115,7 +149,12 @@ export const normalizeArticle = (raw, symbol) => {
   const providerScore =
     entity && typeof entity.sentiment_score === 'number' ? entity.sentiment_score : null;
 
-  const sentiment = classifyArticle({ title, description, providerScore });
+  const sentiment = classifyArticle({
+    title,
+    description,
+    providerScore,
+    titleScore: findTitleSentiment(entity),
+  });
 
   return {
     id: raw.uuid || raw.url,

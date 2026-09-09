@@ -4,6 +4,11 @@ import './HeadlineCard.css';
 
 const TONE_LABELS = { bullish: 'Bullish', bearish: 'Bearish', neutral: 'Neutral' };
 
+const SOURCE_NOTES = {
+  keywords: 'by keywords',
+  article: 'from article body',
+};
+
 function HeadlineCard({ article }) {
   const { sentiment } = article;
 
@@ -30,9 +35,10 @@ function HeadlineCard({ article }) {
       <span className={`headline__tone headline__tone_type_${sentiment.tone}`}>
         {TONE_LABELS[sentiment.tone]}
       </span>
-      {/* Being explicit about a keyword-derived label keeps the score honest. */}
-      {sentiment.source === 'keywords' && (
-        <span className="headline__tone-note">by keywords</span>
+      {/* Say where the label came from: a provider score on the headline needs
+          no caveat, but a keyword reading or a body-level score does. */}
+      {SOURCE_NOTES[sentiment.source] && (
+        <span className="headline__tone-note">{SOURCE_NOTES[sentiment.source]}</span>
       )}
     </li>
   );

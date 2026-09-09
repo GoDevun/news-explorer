@@ -18,7 +18,7 @@ const BULLISH_VERBS = [
 const BEARISH_VERBS = [
   'tumble', 'plunge', 'plummet', 'slump', 'sink', 'slide', 'downgrade', 'slash',
   'halt', 'delay', 'resign', 'sue', 'probe', 'recall', 'underperform', 'warn',
-  'miss', 'stumble',
+  'miss', 'stumble', 'drag', 'cripple', 'lag',
 ];
 
 const BULLISH_LITERALS = [
@@ -111,19 +111,34 @@ export const scoreByKeywords = (text) => {
   return Math.max(-1, Math.min(1, ((bullishHits - bearishHits) / decided) * Math.min(1, decided / 2)));
 };
 
+const hasOpinion = (value) =>
+  typeof value === 'number' && Math.abs(value) >= SENTIMENT_EPSILON;
+
 /**
- * Decides one article's tone, preferring the provider score and falling back
- * to the lexicon. Returns the source of the decision so the UI can be honest
- * about where the label came from.
+ * Decides one article's tone.
+ *
+ * This is a headline classifier, so headline evidence wins. Marketaux scores an
+ * entity wherever it appears, which is often deep in the body: an article
+ * headlined "Tech Sector Drags on Markets" can carry a +0.72 score for TSLA
+ * because of a positive mention further down. Reporting that as the headline's
+ * tone would be wrong, so the provider's article-level score is used only as a
+ * last resort and is labelled as coming from the body.
+ *
+ * Priority: the provider's score for the entity in the title, then a keyword
+ * reading of the headline, then the provider's article-level score.
  */
-export const classifyArticle = ({ title, description, providerScore }) => {
-  if (typeof providerScore === 'number' && Math.abs(providerScore) >= SENTIMENT_EPSILON) {
-    return { score: providerScore, tone: scoreToTone(providerScore), source: 'provider' };
+export const classifyArticle = ({ title, description, providerScore, titleScore }) => {
+  if (hasOpinion(titleScore)) {
+    return { score: titleScore, tone: scoreToTone(titleScore), source: 'headline' };
   }
 
   const keywordScore = scoreByKeywords(`${title || ''}. ${description || ''}`);
   if (keywordScore !== 0) {
     return { score: keywordScore, tone: scoreToTone(keywordScore), source: 'keywords' };
+  }
+
+  if (hasOpinion(providerScore)) {
+    return { score: providerScore, tone: scoreToTone(providerScore), source: 'article' };
   }
 
   return { score: 0, tone: 'neutral', source: 'none' };

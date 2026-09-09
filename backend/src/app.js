@@ -9,8 +9,18 @@ import { apiLimiter } from './middlewares/rateLimiter.js';
 
 const app = express();
 
+// Render (like most hosts) terminates TLS at a proxy, so the rate limiter has
+// to read the forwarded address or it would see every request as one client.
+if (config.isProduction) {
+  app.set('trust proxy', 1);
+}
+
 app.use(helmet());
-app.use(cors());
+app.use(
+  cors(
+    config.corsOrigins.length ? { origin: config.corsOrigins } : {}
+  )
+);
 app.use(express.json());
 app.use(apiLimiter);
 

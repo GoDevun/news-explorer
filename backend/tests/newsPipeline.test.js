@@ -21,7 +21,15 @@ const messyPayload = {
       image_url: 'https://example.com/a1.jpg',
       published_at: '2026-09-08T10:00:00.000000Z',
       source: 'reuters.com',
-      entities: [{ symbol: 'TSLA', name: 'Tesla, Inc.', industry: 'Auto', sentiment_score: 0.62 }],
+      entities: [
+        {
+          symbol: 'TSLA',
+          name: 'Tesla, Inc.',
+          industry: 'Auto',
+          sentiment_score: 0.62,
+          highlights: [{ highlighted_in: 'title', sentiment: 0.62 }],
+        },
+      ],
     },
     // Missing description, null image, no entities array at all.
     {
@@ -64,7 +72,7 @@ const server = http.createServer((req, res) => {
   res.writeHead(200, {
     'Content-Type': 'application/json',
     'X-UsageLimit-Limit': '100',
-    'X-UsageLimit-Used': String(requestCount),
+    'X-UsageLimit-Remaining': String(100 - requestCount),
   });
   // Only page 1 has articles, so the client should stop paging after it.
   res.end(JSON.stringify(page === 1 ? messyPayload : { meta: {}, data: [] }));
@@ -96,7 +104,7 @@ test('news pipeline', async (t) => {
     assert.equal(quota.remaining, quota.limit - quota.used);
 
     const [first, second] = articles;
-    assert.equal(first.sentiment.source, 'provider');
+    assert.equal(first.sentiment.source, 'headline');
     assert.equal(first.sentiment.tone, 'bullish');
 
     // No entities array: falls back to keywords and still fills every field.

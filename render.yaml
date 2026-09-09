@@ -1,0 +1,23 @@
+# Blueprint for hosting the API on Render's free tier.
+# GitHub Pages can only serve static files, so the Express server needs a home
+# of its own; the Pages frontend then points at it via VITE_API_BASE_URL.
+services:
+  - type: web
+    name: stock-news-sentiment-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /status
+    envVars:
+      - key: MARKETAUX_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGO_URL
+        sync: false
+      - key: CORS_ORIGINS
+        value: https://godevun.github.io
+      - key: NODE_ENV
+        value: production

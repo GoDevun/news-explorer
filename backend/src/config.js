@@ -29,6 +29,13 @@ export const config = {
     pagesPerLookup: Number(process.env.MARKETAUX_PAGES) || 3,
     timeoutMs: 8000,
   },
+  // Browsers enforce this, so the deployed frontend's origin has to be listed.
+  // Empty means "allow any origin", which is fine for a public read-only demo
+  // but should be pinned once the frontend has a stable home.
+  corsOrigins: (process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
   cache: {
     ttlMs: Number(process.env.CACHE_TTL_MS) || 15 * 60 * 1000,
     staleMs: Number(process.env.CACHE_STALE_MS) || 24 * 60 * 60 * 1000,

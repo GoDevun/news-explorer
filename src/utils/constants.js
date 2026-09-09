@@ -17,4 +17,4 @@ export const NOTHING_FOUND_TEXT =
   'No recent articles mention that ticker. Check the symbol and try again.';
 
 export const SENTIMENT_DISCLAIMER =
-  'Scores come from provider sentiment on each headline, with a keyword reading where the provider has no opinion. This is not financial advice.';
+  'Headlines are scored from provider sentiment on the headline first, then a keyword reading, then the provider\u2019s score for the ticker elsewhere in the article. Each card says which. This is not financial advice.';

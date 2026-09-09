@@ -7,19 +7,40 @@ import {
   scoreToTone,
 } from '../src/services/sentiment.js';
 
-test('provider sentiment wins when it has an opinion', () => {
-  const result = classifyArticle({ title: 'Anything', providerScore: 0.78 });
+test('a provider score found in the headline wins outright', () => {
+  const result = classifyArticle({ title: 'Anything', titleScore: 0.78, providerScore: -0.5 });
   assert.equal(result.tone, 'bullish');
-  assert.equal(result.source, 'provider');
+  assert.equal(result.source, 'headline');
 });
 
-test('falls back to keywords when the provider score is missing or zero', () => {
+test('an article-level score never overrides the headline itself', () => {
+  // Real case: the body mentions TSLA positively, but this headline is not
+  // bullish and must not be labelled as such.
+  const result = classifyArticle({
+    title: 'Tech Sector Drags on Markets as Investors Await Key Economic Data',
+    providerScore: 0.7184,
+  });
+  assert.equal(result.tone, 'bearish');
+  assert.equal(result.source, 'keywords');
+});
+
+test('article-level sentiment is the last resort and says so', () => {
+  const result = classifyArticle({
+    title: 'Quarterly shareholder letter published',
+    providerScore: 0.66,
+  });
+  assert.equal(result.tone, 'bullish');
+  assert.equal(result.source, 'article');
+});
+
+test('falls back to keywords when the provider has no opinion', () => {
   const missing = classifyArticle({ title: 'Shares plunge after guidance cut' });
   assert.equal(missing.tone, 'bearish');
   assert.equal(missing.source, 'keywords');
 
   const zero = classifyArticle({
     title: 'Company beats estimates as revenue surges',
+    titleScore: 0,
     providerScore: 0,
   });
   assert.equal(zero.tone, 'bullish');
