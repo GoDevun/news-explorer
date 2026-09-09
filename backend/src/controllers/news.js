@@ -6,7 +6,7 @@ import { config } from '../config.js';
 import { dbState } from '../db.js';
 
 const buildPayload = (query, result) => ({
-  symbol: result.symbol || query,
+  symbol: result.symbol || query.toUpperCase(),
   query,
   // How the feed was found: an exact ticker, a name we resolved to a ticker,
   // or a free-text search. The UI tells the user which.
@@ -47,7 +47,7 @@ export const getNewsBySymbol = async (req, res, next) => {
 
   try {
     const result = await fetchScoredNews(query);
-    const payload = buildPayload(symbol, result);
+    const payload = buildPayload(query, result);
     newsCache.set(symbol, payload);
     res.send({ ...payload, meta: { ...payload.meta, cached: false, stale: false } });
   } catch (error) {

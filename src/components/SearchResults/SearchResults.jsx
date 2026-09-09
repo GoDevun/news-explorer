@@ -56,13 +56,19 @@ function SearchResults({
             {feed.matchedBy === 'name' ? (
               <>
                 Matched <b>{feed.query}</b> to <b>{feed.symbol}</b>
-                {feed.entityName ? ` — ${feed.entityName}` : ''}.
+                {feed.entityName ? <> — {feed.entityName}</> : null}
               </>
             ) : (
               <>
-                No articles are tagged <b>{feed.symbol}</b>, so these are stories
-                mentioning <b>{feed.keyword || feed.query}</b>. Headline scores still
-                apply; per-company sentiment from the provider may not.
+                No articles are tagged to <b>{feed.symbol}</b>, so these are stories
+                that mention{' '}
+                <b>
+                  {feed.keyword && feed.keyword.toUpperCase() !== feed.symbol
+                    ? feed.keyword
+                    : feed.query}
+                </b>{' '}
+                in the text. Headline scores still apply; the provider&apos;s
+                per-company sentiment may not.
               </>
             )}
           </p>
