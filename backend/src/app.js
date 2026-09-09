@@ -1,8 +1,8 @@
 import express from 'express';
-import mongoose from 'mongoose';
 import cors from 'cors';
 import helmet from 'helmet';
 import { config } from './config.js';
+import { connectToDatabase } from './db.js';
 import { router } from './routes/index.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { apiLimiter } from './middlewares/rateLimiter.js';
@@ -28,16 +28,12 @@ app.use(router);
 
 app.use(errorHandler);
 
-const start = async () => {
-  await mongoose.connect(config.mongoUrl);
-  app.listen(config.port, () => {
-    console.log(`API listening on http://localhost:${config.port}`);
-  });
-};
-
-start().catch((error) => {
-  console.error('Failed to start the server:', error.message);
-  process.exit(1);
+// Listen first so the news feed and health check are available immediately,
+// then bring the database up behind it.
+app.listen(config.port, () => {
+  console.log(`API listening on port ${config.port}`);
 });
+
+connectToDatabase();
 
 export { app };

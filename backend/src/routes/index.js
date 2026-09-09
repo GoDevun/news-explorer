@@ -5,12 +5,13 @@ import { tickersRouter } from './tickers.js';
 import { getNewsBySymbol, getStatus } from '../controllers/news.js';
 import { createUser, login } from '../controllers/users.js';
 import { newsLimiter } from '../middlewares/rateLimiter.js';
+import { requireDatabase } from '../middlewares/requireDatabase.js';
 import { NotFoundError } from '../utils/errors.js';
 
 export const router = Router();
 
-router.post('/signup', signupValidator, createUser);
-router.post('/signin', signinValidator, login);
+router.post('/signup', requireDatabase, signupValidator, createUser);
+router.post('/signin', requireDatabase, signinValidator, login);
 
 router.get(
   '/news',
@@ -25,7 +26,7 @@ router.get(
 
 router.get('/status', getStatus);
 
-router.use('/users', usersRouter);
-router.use('/tickers', tickersRouter);
+router.use('/users', requireDatabase, usersRouter);
+router.use('/tickers', requireDatabase, tickersRouter);
 
 router.use((req, res, next) => next(new NotFoundError('Requested resource not found')));

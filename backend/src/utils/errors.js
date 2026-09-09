@@ -46,6 +46,13 @@ export class TooManyRequestsError extends HttpError {
   }
 }
 
+/** A dependency this route needs (the database) is not available yet. */
+export class ServiceUnavailableError extends HttpError {
+  constructor(message = 'This feature is temporarily unavailable') {
+    super(503, message);
+  }
+}
+
 /** Upstream (Marketaux) is unreachable, erroring, or out of quota. */
 export class UpstreamError extends HttpError {
   constructor(message = 'The news provider is unavailable') {

@@ -3,6 +3,7 @@ import { fetchScoredNews } from '../services/marketaux.js';
 import { summarize } from '../services/sentiment.js';
 import { HttpError, UpstreamError } from '../utils/errors.js';
 import { config } from '../config.js';
+import { dbState } from '../db.js';
 
 const buildPayload = (symbol, { articles, quota, found }) => ({
   symbol,
@@ -64,5 +65,10 @@ export const getNewsBySymbol = async (req, res, next) => {
 
 /** Cache and quota visibility, handy when the daily budget matters. */
 export const getStatus = (req, res) => {
-  res.send({ cache: newsCache.getStats(), configured: Boolean(config.marketaux.apiKey) });
+  res.send({
+    ok: true,
+    newsProvider: { configured: Boolean(config.marketaux.apiKey) },
+    database: { connected: dbState.connected, lastError: dbState.lastError },
+    cache: newsCache.getStats(),
+  });
 };
