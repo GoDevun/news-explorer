@@ -18,7 +18,7 @@ const BULLISH_VERBS = [
 const BEARISH_VERBS = [
   'tumble', 'plunge', 'plummet', 'slump', 'sink', 'slide', 'downgrade', 'slash',
   'halt', 'delay', 'resign', 'sue', 'probe', 'recall', 'underperform', 'warn',
-  'miss', 'stumble', 'drag', 'cripple', 'lag',
+  'miss', 'stumble', 'drag', 'cripple', 'lag', 'stall', 'drop',
 ];
 
 const BULLISH_LITERALS = [
@@ -28,7 +28,8 @@ const BULLISH_LITERALS = [
   'buyback', 'share repurchase', 'dividend increase', 'raises dividend',
   'strong demand', 'strong growth', 'strong results', 'wins contract',
   'new contract', 'approval', 'approved', 'partnership', 'breakthrough',
-  'bullish', 'buy rating', 'tailwind', 'momentum', 'gains', 'gained',
+  'bullish', 'buy rating', 'tailwind', 'gains momentum', 'momentum builds',
+  'gains', 'gained',
   'rises', 'rose', 'rising', 'outlook raised', 'better than expected',
 ];
 
@@ -40,7 +41,7 @@ const BEARISH_LITERALS = [
   'default', 'weak demand', 'weak results', 'slowing growth', 'loss widens',
   'widening loss', 'bearish', 'sell rating', 'short seller', 'steps down',
   'scandal', 'roadblock', 'setback', 'headwind', 'falls', 'fell', 'falling',
-  'drops', 'dropped', 'declines', 'declined', 'worse than expected', 'recalls',
+  'declines', 'declined', 'worse than expected', 'recalls',
 ];
 
 const escapeTerm = (term) => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

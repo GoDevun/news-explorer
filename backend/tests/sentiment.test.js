@@ -56,6 +56,15 @@ test('does not mistake the season for a price move', () => {
   assert.equal(scoreByKeywords('Apple announces its fall product launch event'), 0);
 });
 
+test('ambiguous words do not fake a direction', () => {
+  // Live regression: "momentum" alone scored this bullish.
+  assert.ok(scoreByKeywords('Market Momentum Stalls as Tech and Energy Diverge') < 0);
+  // The directional phrase still reads positive.
+  assert.ok(scoreByKeywords('Retailer gains momentum after strong results') > 0);
+  // A genuinely mixed headline should not commit either way.
+  assert.equal(scoreByKeywords('Indexes drop, but one megacap gained 6.3%'), 0);
+});
+
 test('genuinely neutral headlines stay neutral', () => {
   const result = classifyArticle({ title: 'Company announces shareholder meeting date' });
   assert.equal(result.tone, 'neutral');
