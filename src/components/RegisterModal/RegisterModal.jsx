@@ -23,7 +23,7 @@ function RegisterModal({
     onRegister({
       email: values.email,
       password: values.password,
-      username: values.username,
+      name: values.name,
     });
   };
 
@@ -62,28 +62,29 @@ function RegisterModal({
         id="register-password"
         name="password"
         type="password"
-        placeholder="Enter password"
+        placeholder="Enter password (8+ characters)"
         value={values.password || ''}
         onChange={handleChange}
+        minLength="8"
         required
       />
       <span className="modal__input-error">{errors.password}</span>
-      <label className="modal__label" htmlFor="register-username">
-        Username
+      <label className="modal__label" htmlFor="register-name">
+        Name
       </label>
       <input
         className="modal__input"
-        id="register-username"
-        name="username"
+        id="register-name"
+        name="name"
         type="text"
-        placeholder="Enter your username"
-        value={values.username || ''}
+        placeholder="Enter your name"
+        value={values.name || ''}
         onChange={handleChange}
         minLength="2"
         maxLength="30"
         required
       />
-      <span className="modal__input-error">{errors.username}</span>
+      <span className="modal__input-error">{errors.name}</span>
     </ModalWithForm>
   );
 }

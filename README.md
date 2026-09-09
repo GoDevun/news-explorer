@@ -1,135 +1,150 @@
-# NewsExplorer
+# Stock News Sentiment Dashboard
 
-Final project for the TripleTen Software Engineering program. NewsExplorer is a React
-application that lets users search recent news articles by keyword through the
-[News API](https://newsapi.org) and save the ones they care about to a personal account.
-A Stock News Sentiment page extends the same idea to the market: enter a ticker and the app reads a
-bullish or bearish signal from live quotes, analyst ratings and recent company headlines
-via [Finnhub](https://finnhub.io).
+A searchable dashboard that pulls live financial news by ticker and classifies each
+headline as **bullish**, **bearish** or **neutral**, replacing a multi-source,
+multi-tab research routine with a single scored feed.
+
+Search a symbol, get one page: an overall reading with a score from -1 to +1, the
+split of bullish / bearish / neutral coverage, and every headline behind it tagged
+individually. Sign in to keep a watchlist of tickers with your own notes.
+
+**Stack:** React · Node.js · Express · MongoDB · Marketaux API
 
 ## Live demo
 
-- **Frontend:** https://godevun.github.io/news-explorer/
-
-<!-- TODO: after recording the pitch video, uncomment this line and paste the URL.
-- **Project walkthrough (video):** PASTE_VIDEO_URL_HERE
--->
+- **Frontend:** run locally (see below) — the dashboard needs the API server, so the
+  static GitHub Pages build is not a complete deployment on its own.
 
 ## Features
 
-- Keyword search against the News API covering the last seven days, with client-side
-  validation that shows "Please enter a keyword" when the field is empty.
-- A spinning preloader while the request is in flight, a "Nothing found" state when the
-  search returns no articles, and an error message if the request fails.
-- Results render three cards at a time; a "Show more" button reveals the next three and
-  disappears once every article is on the page.
-- Saving articles from a card. Signed-out visitors see a "Sign in to save articles"
-  tooltip and get the registration modal when they click the bookmark.
-- A `/saved-news` page listing saved articles with the keyword each was found by and a
-  trash icon to remove them.
-- Registration and login modals built on a single reusable `ModalWithForm` component,
-  closable by the cross icon, a click on the overlay, or the Escape key.
-- Two header states — a "Sign in" button when signed out, and the username plus a
-  "Saved articles" link when signed in.
+### Scored news feed
 
-### Stock News Sentiment
+- Ticker search that routes to its own results page (`/search/:ticker`), so a reading
+  is linkable and the browser's back button behaves. A compact search bar stays pinned
+  at the top of the results, so the next ticker is always one keystroke away.
+- Every headline is scored using the provider's per-entity sentiment. When Marketaux
+  returns no opinion — a frequent case — a keyword lexicon reads the headline instead,
+  and the card says `by keywords` so the label is never presented as more than it is.
+- The lexicon matches verbs across their inflections, so "tumbling" reads the same as
+  "tumbles", while words that collide with everyday English (autumn's "fall") are
+  matched only in their price-move forms.
+- An overall verdict aggregates the feed and scales down thin samples: two opinionated
+  headlines should not read as full conviction.
 
-- A `/stock-news-sentiment` page that takes a ticker (or one of the quick-pick chips) and returns a
-  quote card: price, day change, open, previous close, day range, market cap and a
-  marker showing where the price sits in its 52-week range.
-- A bullish/bearish reading scored from -1 to +1 out of five weighted factors — 52-week
-  range position (20%), price momentum across 3, 6 and 12 months (25%), today's move
-  (10%), analyst ratings (20%) and news sentiment (25%). Every factor is shown with its
-  own score, tone and a plain-English explanation, so the verdict is traceable.
-- Company headlines from the last 14 days, each tagged bullish, bearish or neutral by a
-  keyword lexicon over the headline and summary. They reuse the same cards as the news
-  search, so signed-in users can save them; saved stock articles keep the ticker as
-  their keyword.
-- Factors with no data are dropped and the remaining weights renormalize, so a symbol
-  with, say, no analyst coverage still gets a reading instead of an error.
+### REST layer
 
-## Tech stack
+- The browser never talks to Marketaux. `GET /news?symbol=` returns a normalized,
+  scored, cached payload, so provider quirks stop at the server.
+- **Normalization:** missing descriptions fall back to the snippet, null images become
+  an empty string, absent `entities` arrays are tolerated, duplicate URLs are dropped,
+  and articles with no link are discarded rather than rendered broken.
+- **Caching:** feeds are cached with a TTL, then kept beyond it as a stale copy. The
+  free Marketaux plan allows 100 requests a day, so repeat lookups must not spend
+  quota.
+- **Failure handling:** when the provider is down, timing out, or the daily quota is
+  spent, the API serves the stale copy with `stale: true` and a plain-English notice
+  instead of failing. The client only sees an error when there is no cached copy at
+  all. Upstream errors are mapped to typed responses (429 for quota, 502 for provider
+  failures) and never leak a provider message or stack trace.
+- Rate limits of its own: a global limiter plus a tighter budget on the one route that
+  can spend upstream quota.
 
-- React 18 with functional components and hooks
-- React Router v5 for routing
-- Vite for the build tooling
-- Plain CSS with BEM naming, no CSS framework
-- The Fetch API for all network requests, with no third-party HTTP libraries
-- Finnhub for quotes, company profiles, basic financials, analyst recommendation trends
-  and company news — all free-tier endpoints
+### Accounts and saved tickers
+
+- Registration and login with JWT auth, passwords hashed with bcrypt.
+- Sign-in failures return an identical message for an unknown email and a wrong
+  password, so the endpoint cannot be used to discover which accounts exist.
+- Full CRUD on saved tickers: save from a result, list them, edit a note inline,
+  remove them. Every write is scoped to its owner, and requests for someone else's
+  ticker return 403.
+- Each save snapshots the reading at that moment, so the watchlist shows the mood
+  without spending quota to redraw.
+- Responsive desktop, tablet and mobile layouts.
 
 ## Project structure
 
 ```
-src/
-├── components/     JSX components, each with its own CSS file
-├── hooks/          useFormWithValidation, useModalClose
-├── images/         SVG icons and raster assets
-├── utils/          constants, News API and Finnhub clients, the bullish/bearish signal
-│                   engine, simulated backend, date helpers
-└── vendor/         normalize.css and @font-face declarations
+.
+├── src/                  React frontend
+│   ├── components/       one folder per component, each with its own CSS
+│   ├── hooks/            useFormWithValidation, useModalClose
+│   └── utils/            API client, constants, date helpers
+└── backend/              Express API
+    ├── src/
+    │   ├── controllers/  request handling
+    │   ├── models/       Mongoose schemas for users and saved tickers
+    │   ├── middlewares/  auth, error handling, rate limiting
+    │   ├── routes/       route definitions with Joi validation
+    │   ├── services/     Marketaux client, cache, sentiment scoring
+    │   └── utils/        typed HTTP errors
+    └── tests/            node:test suites
 ```
-
-## Simulated backend
-
-The real backend arrives in Stage 2. Until then, `src/utils/fakeApi.js` stands in for it:
-registration, login, token checking, and saving or deleting articles all resolve
-asynchronously and persist to `localStorage`, so the whole signed-in experience is
-reviewable without a server.
 
 ## Getting started
 
-Install the dependencies:
+You need Node.js 18+ and a running MongoDB.
+
+### 1. The API
 
 ```bash
+cd backend
 npm install
-```
-
-Add your API keys. Register for a free News API key at
-[newsapi.org/register](https://newsapi.org/register) and a free market data key at
-[finnhub.io/register](https://finnhub.io/register), then create a `.env` file based on
-`.env.example`:
-
-```bash
 cp .env.example .env
 ```
 
-```
-VITE_NEWS_API_KEY=your_key_here
-VITE_FINNHUB_API_KEY=your_finnhub_key_here
-```
-
-Start the development server:
+Put a free Marketaux key from [marketaux.com](https://www.marketaux.com/register) into
+`backend/.env` as `MARKETAUX_API_KEY`, set a `JWT_SECRET`, then:
 
 ```bash
-npm run dev
+npm run dev      # http://localhost:3001
 ```
 
-The app runs at `http://localhost:5173/news-explorer/`.
+### 2. The frontend
+
+```bash
+npm install
+cp .env.example .env    # VITE_API_BASE_URL=http://localhost:3001
+npm run dev             # http://localhost:5173/stock-news-sentiment/
+```
 
 ## Available scripts
 
-| Script | Description |
-| --- | --- |
-| `npm run dev` | Start the development server |
-| `npm run build` | Build for production into `dist/` |
-| `npm run preview` | Preview the production build locally |
-| `npm run lint` | Run ESLint |
-| `npm run deploy` | Publish `dist/` to GitHub Pages |
+Frontend: `npm run dev`, `npm run build`, `npm run lint`, `npm run preview`.
 
-## A note on the News API
+Backend: `npm run dev` (watch mode), `npm start`, `npm test`, `npm run lint`.
 
-The free News API tier only serves requests from `localhost`. In production the app
-switches to the proxy at `https://nomoreparties.co/news/v2/everything`, handled
-automatically in `src/utils/constants.js`.
+## API
 
-## A note on the market data API
+| Method | Route | Auth | Purpose |
+| --- | --- | --- | --- |
+| `POST` | `/signup` | – | Create an account, returns a token |
+| `POST` | `/signin` | – | Log in, returns a token |
+| `GET` | `/users/me` | yes | The signed-in user |
+| `GET` | `/news?symbol=` | – | Normalized, scored, cached feed |
+| `GET` | `/status` | – | Cache statistics and provider configuration |
+| `GET` | `/tickers` | yes | List saved tickers |
+| `POST` | `/tickers` | yes | Save a ticker |
+| `PATCH` | `/tickers/:id` | yes | Update a note or stored reading |
+| `DELETE` | `/tickers/:id` | yes | Remove a saved ticker |
 
-Finnhub serves browser requests with `Access-Control-Allow-Origin: *`, so the page
-calls it directly in both development and production — no proxy needed. The free tier
-allows 60 calls a minute and one ticker lookup costs five, so a rapid burst of searches
-returns a rate-limit message rather than data.
+Errors always come back as `{ "message": "..." }`.
 
-Like the News API key, the Finnhub key is a `VITE_` variable and therefore visible in the
-built bundle. That is fine for a free read-only market data key, but any paid key belongs
-behind the Stage 2 backend instead.
+## Tests
+
+```bash
+cd backend && npm test
+```
+
+Covers the sentiment classifier (provider score, keyword fallback, inflection
+matching, the autumn/"fall" false positive) and the news pipeline against a stubbed
+provider: normalization of deliberately malformed payloads, deduplication, paging,
+cache hits, and the degradation path when the provider fails or the quota is spent.
+
+## Notes on the provider
+
+Marketaux's free plan allows 100 requests a day and caps articles per request, which
+is what the caching layer is for: one lookup pages a few times, and the result is
+served from memory afterwards. Usage is read from the response's `X-UsageLimit`
+headers and passed through in the payload's `meta.quota`.
+
+The provider key lives only on the server. Nothing in the browser bundle can spend it.

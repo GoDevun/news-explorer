@@ -1,5 +1,5 @@
 {
-  "name": "news-explorer",
+  "name": "stock-news-sentiment",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -29,5 +29,6 @@
   },
   "allowScripts": {
     "esbuild@0.21.5": true
-  }
+  },
+  "description": "Searchable dashboard that scores financial news by ticker as bullish, bearish or neutral."
 }

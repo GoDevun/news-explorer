@@ -23,7 +23,7 @@ function Header({ theme, isLoggedIn, currentUser, onSignInClick, onLogout }) {
       className={`header header_theme_${theme} ${isMenuOpen ? 'header_menu-open' : ''}`}
     >
       <Link className="header__logo" to="/" onClick={closeMenu}>
-        NewsExplorer
+        StockSentiment
       </Link>
       <Navigation
         theme={theme}

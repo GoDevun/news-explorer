@@ -7,7 +7,7 @@ function Footer() {
   return (
     <footer className="footer">
       <p className="footer__copyright">
-        © {new Date().getFullYear()} NewsExplorer, Powered by News API
+        © {new Date().getFullYear()} StockSentiment, Powered by Marketaux
       </p>
       <nav className="footer__nav" aria-label="Footer navigation">
         <ul className="footer__links">

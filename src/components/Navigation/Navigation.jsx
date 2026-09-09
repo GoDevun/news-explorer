@@ -35,25 +35,15 @@ function Navigation({
               Home
             </NavLink>
           </li>
-          <li className="nav__item">
-            <NavLink
-              to="/stock-news-sentiment"
-              className="nav__link"
-              activeClassName="nav__link_active"
-              onClick={onCloseMenu}
-            >
-              Stock News Sentiment
-            </NavLink>
-          </li>
           {isLoggedIn && (
             <li className="nav__item">
               <NavLink
-                to="/saved-news"
+                to="/saved"
                 className="nav__link"
                 activeClassName="nav__link_active"
                 onClick={onCloseMenu}
               >
-                Saved articles
+                Saved tickers
               </NavLink>
             </li>
           )}
@@ -61,7 +51,7 @@ function Navigation({
         {isLoggedIn ? (
           <button className="nav__auth-button" type="button" onClick={onLogout}>
             <span className="nav__username">
-              {currentUser ? currentUser.username : ''}
+              {currentUser ? currentUser.name : ''}
             </span>
             <span className="nav__logout-icon" />
           </button>

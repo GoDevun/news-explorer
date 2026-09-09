@@ -1,31 +1,45 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Route, Switch, useHistory } from 'react-router-dom';
+import { Route, Switch, useHistory, useParams } from 'react-router-dom';
 import Header from '../Header/Header';
-import SearchForm from '../SearchForm/SearchForm';
-import StockSearchForm from '../StockSearchForm/StockSearchForm';
-import Main from '../Main/Main';
-import Stocks from '../Stocks/Stocks';
-import SavedNews from '../SavedNews/SavedNews';
+import TickerSearch from '../TickerSearch/TickerSearch';
+import Home from '../Home/Home';
+import SearchResults from '../SearchResults/SearchResults';
+import SavedTickers from '../SavedTickers/SavedTickers';
 import ProtectedRoute from '../ProtectedRoute/ProtectedRoute';
 import Footer from '../Footer/Footer';
 import LoginModal from '../LoginModal/LoginModal';
 import RegisterModal from '../RegisterModal/RegisterModal';
 import SuccessModal from '../SuccessModal/SuccessModal';
-import * as fakeApi from '../../utils/fakeApi';
-import { getNews } from '../../utils/newsApi';
-import { getStockOverview, STOCK_ERROR_KINDS } from '../../utils/stocksApi';
-import { buildStockSignal } from '../../utils/stockSignal';
+import * as api from '../../utils/api';
 import {
-  CARDS_PER_PAGE,
-  JWT_STORAGE_KEY,
-  LAST_SEARCH_STORAGE_KEY,
   LAST_TICKER_STORAGE_KEY,
-  MISSING_STOCK_KEY_ERROR_MESSAGE,
-  SEARCH_ERROR_MESSAGE,
-  STOCK_ERROR_MESSAGE,
-  STOCK_RATE_LIMIT_ERROR_MESSAGE,
+  NEWS_ERROR_MESSAGE,
+  TOKEN_STORAGE_KEY,
 } from '../../utils/constants';
 import './App.css';
+
+const CARDS_PER_PAGE = 6;
+
+/**
+ * Reads the ticker out of the route so results are linkable and the browser's
+ * back button works, and refetches whenever the symbol in the URL changes.
+ */
+function ResultsRoute({ onLoadFeed, savedTickers, ...props }) {
+  const { ticker } = useParams();
+  const symbol = ticker.toUpperCase();
+
+  useEffect(() => {
+    onLoadFeed(symbol);
+  }, [symbol, onLoadFeed]);
+
+  return (
+    <SearchResults
+      symbol={symbol}
+      isSaved={savedTickers.some((item) => item.symbol === symbol)}
+      {...props}
+    />
+  );
+}
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -35,61 +49,32 @@ function App() {
   const [authError, setAuthError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [articles, setArticles] = useState([]);
-  const [keyword, setKeyword] = useState('');
-  const [hasSearched, setHasSearched] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchError, setSearchError] = useState('');
+  const [feed, setFeed] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [feedError, setFeedError] = useState('');
   const [visibleCount, setVisibleCount] = useState(CARDS_PER_PAGE);
 
-  const [ticker, setTicker] = useState('');
-  const [stock, setStock] = useState(null);
-  const [stockSignal, setStockSignal] = useState(null);
-  const [hasTickerSearched, setHasTickerSearched] = useState(false);
-  const [isStockLoading, setIsStockLoading] = useState(false);
-  const [stockError, setStockError] = useState('');
-  const [isTickerNotFound, setIsTickerNotFound] = useState(false);
-  const [stockVisibleCount, setStockVisibleCount] = useState(CARDS_PER_PAGE);
-
-  const [savedArticles, setSavedArticles] = useState([]);
+  const [savedTickers, setSavedTickers] = useState([]);
 
   const history = useHistory();
 
   useEffect(() => {
-    const token = localStorage.getItem(JWT_STORAGE_KEY);
-    if (token) {
-      fakeApi
-        .checkToken(token)
-        .then((user) => {
-          setCurrentUser(user);
-          setIsLoggedIn(true);
-        })
-        .catch(() => localStorage.removeItem(JWT_STORAGE_KEY))
-        .finally(() => setIsAuthChecking(false));
-    } else {
+    const token = api.getToken();
+    if (!token) {
       setIsAuthChecking(false);
+      return;
     }
 
-    fakeApi
-      .getSavedArticles()
-      .then((storedArticles) => setSavedArticles(storedArticles))
-      .catch(console.error);
-
-    try {
-      const lastSearch = JSON.parse(localStorage.getItem(LAST_SEARCH_STORAGE_KEY));
-      if (lastSearch && Array.isArray(lastSearch.articles)) {
-        setKeyword(lastSearch.keyword);
-        setArticles(lastSearch.articles);
-        setHasSearched(true);
-      }
-    } catch {
-      localStorage.removeItem(LAST_SEARCH_STORAGE_KEY);
-    }
-
-    const lastTicker = localStorage.getItem(LAST_TICKER_STORAGE_KEY);
-    if (lastTicker) {
-      setTicker(lastTicker);
-    }
+    api
+      .getCurrentUser(token)
+      .then((user) => {
+        setCurrentUser(user);
+        setIsLoggedIn(true);
+        return api.getSavedTickers(token);
+      })
+      .then((tickers) => setSavedTickers(tickers || []))
+      .catch(() => localStorage.removeItem(TOKEN_STORAGE_KEY))
+      .finally(() => setIsAuthChecking(false));
   }, []);
 
   const closeModal = useCallback(() => {
@@ -97,70 +82,32 @@ function App() {
     setAuthError('');
   }, []);
 
-  const handleSearch = (searchKeyword) => {
-    setHasSearched(true);
-    setIsSearching(true);
-    setSearchError('');
-    setVisibleCount(CARDS_PER_PAGE);
-    setKeyword(searchKeyword);
-    getNews(searchKeyword)
-      .then((data) => {
-        const uniqueArticles = data.articles.filter(
-          (article, index, list) =>
-            list.findIndex((item) => item.url === article.url) === index
-        );
-        setArticles(uniqueArticles);
-        localStorage.setItem(
-          LAST_SEARCH_STORAGE_KEY,
-          JSON.stringify({ keyword: searchKeyword, articles: uniqueArticles })
-        );
-      })
-      .catch(() => setSearchError(SEARCH_ERROR_MESSAGE))
-      .finally(() => setIsSearching(false));
+  /** Navigating is the search: the route owns the ticker, the effect fetches. */
+  const handleSearch = (ticker) => {
+    localStorage.setItem(LAST_TICKER_STORAGE_KEY, ticker);
+    history.push(`/search/${ticker}`);
   };
+
+  const loadFeed = useCallback((symbol) => {
+    setIsLoading(true);
+    setFeedError('');
+    setVisibleCount(CARDS_PER_PAGE);
+
+    api
+      .getNews(symbol)
+      .then(setFeed)
+      .catch((error) => {
+        setFeed(null);
+        setFeedError(error.message || NEWS_ERROR_MESSAGE);
+      })
+      .finally(() => setIsLoading(false));
+  }, []);
 
   const handleShowMore = () => setVisibleCount((count) => count + CARDS_PER_PAGE);
 
-  const handleTickerSearch = (searchTicker) => {
-    setHasTickerSearched(true);
-    setIsStockLoading(true);
-    setStockError('');
-    setIsTickerNotFound(false);
-    setStockVisibleCount(CARDS_PER_PAGE);
-    setTicker(searchTicker);
-    setStock(null);
-    setStockSignal(null);
-
-    getStockOverview(searchTicker)
-      .then((overview) => {
-        setStock(overview);
-        setStockSignal(buildStockSignal(overview));
-        localStorage.setItem(LAST_TICKER_STORAGE_KEY, overview.ticker);
-      })
-      .catch((error) => {
-        if (error.kind === STOCK_ERROR_KINDS.notFound) {
-          setIsTickerNotFound(true);
-          return;
-        }
-        if (error.kind === STOCK_ERROR_KINDS.missingKey) {
-          setStockError(MISSING_STOCK_KEY_ERROR_MESSAGE);
-          return;
-        }
-        if (error.kind === STOCK_ERROR_KINDS.rateLimit) {
-          setStockError(STOCK_RATE_LIMIT_ERROR_MESSAGE);
-          return;
-        }
-        setStockError(STOCK_ERROR_MESSAGE);
-      })
-      .finally(() => setIsStockLoading(false));
-  };
-
-  const handleStockShowMore = () =>
-    setStockVisibleCount((count) => count + CARDS_PER_PAGE);
-
   const handleRegister = (formValues) => {
     setIsSubmitting(true);
-    fakeApi
+    api
       .register(formValues)
       .then(() => {
         setAuthError('');
@@ -172,56 +119,84 @@ function App() {
 
   const handleLogin = (formValues) => {
     setIsSubmitting(true);
-    fakeApi
-      .authorize(formValues)
+    api
+      .login(formValues)
       .then((data) => {
-        localStorage.setItem(JWT_STORAGE_KEY, data.token);
-        return fakeApi.checkToken(data.token);
-      })
-      .then((user) => {
-        setCurrentUser(user);
+        localStorage.setItem(TOKEN_STORAGE_KEY, data.token);
+        setCurrentUser(data.user);
         setIsLoggedIn(true);
         closeModal();
+        return api.getSavedTickers(data.token);
       })
+      .then((tickers) => setSavedTickers(tickers || []))
       .catch((error) => setAuthError(error.message))
       .finally(() => setIsSubmitting(false));
   };
 
   const handleLogout = () => {
-    localStorage.removeItem(JWT_STORAGE_KEY);
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
     setIsLoggedIn(false);
     setCurrentUser(null);
+    setSavedTickers([]);
     history.push('/');
   };
 
-  const handleDeleteArticle = (articleId) => {
-    fakeApi
-      .deleteArticle(articleId)
-      .then(() =>
-        setSavedArticles((articlesList) =>
-          articlesList.filter((item) => item._id !== articleId)
-        )
-      )
-      .catch(console.error);
-  };
-
-  const handleSaveArticle = (article, articleKeyword = keyword) => {
+  const handleSaveTicker = () => {
     if (!isLoggedIn) {
       setActiveModal('register');
       return;
     }
-    const alreadySavedArticle = savedArticles.find((item) => item.url === article.url);
-    if (alreadySavedArticle) {
-      handleDeleteArticle(alreadySavedArticle._id);
+    if (!feed) {
       return;
     }
-    fakeApi
-      .saveArticle(article, articleKeyword)
-      .then((savedArticle) =>
-        setSavedArticles((articlesList) => [...articlesList, savedArticle])
+
+    const token = api.getToken();
+    const existing = savedTickers.find((item) => item.symbol === feed.symbol);
+
+    if (existing) {
+      api
+        .deleteSavedTicker(existing._id, token)
+        .then(() =>
+          setSavedTickers((list) => list.filter((item) => item._id !== existing._id))
+        )
+        .catch(console.error);
+      return;
+    }
+
+    const firstEntity = feed.articles[0] && feed.articles[0].entity;
+
+    api
+      .saveTicker(
+        {
+          symbol: feed.symbol,
+          companyName: (firstEntity && firstEntity.name) || '',
+          lastSentiment: {
+            score: feed.summary.score,
+            tone: feed.summary.tone,
+            label: feed.summary.label,
+          },
+        },
+        token
       )
+      .then((saved) => setSavedTickers((list) => [saved, ...list]))
       .catch(console.error);
   };
+
+  const handleUpdateNote = (id, note) =>
+    api
+      .updateSavedTicker(id, { note }, api.getToken())
+      .then((updated) =>
+        setSavedTickers((list) =>
+          list.map((item) => (item._id === updated._id ? updated : item))
+        )
+      )
+      .catch(console.error);
+
+  const handleDeleteTicker = (id) =>
+    api
+      .deleteSavedTicker(id, api.getToken())
+      .then(() => setSavedTickers((list) => list.filter((item) => item._id !== id)))
+      .catch(console.error);
 
   const openLoginModal = () => {
     setAuthError('');
@@ -233,77 +208,53 @@ function App() {
     setActiveModal('register');
   };
 
+  const headerProps = {
+    isLoggedIn,
+    currentUser,
+    onSignInClick: openLoginModal,
+    onLogout: handleLogout,
+  };
+
   return (
     <div className="page">
       <Switch>
         <Route exact path="/">
           <div className="hero">
-            <Header
-              theme="dark"
-              isLoggedIn={isLoggedIn}
-              currentUser={currentUser}
-              onSignInClick={openLoginModal}
-              onLogout={handleLogout}
-            />
-            <SearchForm onSearch={handleSearch} />
+            <Header theme="dark" {...headerProps} />
+            <TickerSearch variant="hero" onSearch={handleSearch} />
           </div>
-          <Main
-            hasSearched={hasSearched}
-            isSearching={isSearching}
-            searchError={searchError}
-            articles={articles}
+          <Home />
+        </Route>
+
+        <Route path="/search/:ticker">
+          <Header theme="light" {...headerProps} />
+          <ResultsRoute
+            feed={feed}
+            isLoading={isLoading}
+            error={feedError}
             visibleCount={visibleCount}
             onShowMore={handleShowMore}
+            onSearch={handleSearch}
+            onLoadFeed={loadFeed}
             isLoggedIn={isLoggedIn}
-            savedArticles={savedArticles}
-            onSaveClick={handleSaveArticle}
+            savedTickers={savedTickers}
+            onSaveClick={handleSaveTicker}
           />
         </Route>
-        <Route path="/stock-news-sentiment">
-          <div className="hero">
-            <Header
-              theme="dark"
-              isLoggedIn={isLoggedIn}
-              currentUser={currentUser}
-              onSignInClick={openLoginModal}
-              onLogout={handleLogout}
-            />
-            <StockSearchForm onSearch={handleTickerSearch} initialTicker={ticker} />
-          </div>
-          <Stocks
-            hasSearched={hasTickerSearched}
-            isLoading={isStockLoading}
-            error={stockError}
-            isNotFound={isTickerNotFound}
-            stock={stock}
-            signal={stockSignal}
-            visibleCount={stockVisibleCount}
-            onShowMore={handleStockShowMore}
-            isLoggedIn={isLoggedIn}
-            savedArticles={savedArticles}
-            onSaveClick={(article) => handleSaveArticle(article, ticker)}
-          />
-        </Route>
-        <ProtectedRoute
-          path="/saved-news"
-          isLoggedIn={isLoggedIn}
-          isAuthChecking={isAuthChecking}
-        >
-          <Header
-            theme="light"
-            isLoggedIn={isLoggedIn}
+
+        <ProtectedRoute path="/saved" isLoggedIn={isLoggedIn} isAuthChecking={isAuthChecking}>
+          <Header theme="light" {...headerProps} />
+          <SavedTickers
             currentUser={currentUser}
-            onSignInClick={openLoginModal}
-            onLogout={handleLogout}
-          />
-          <SavedNews
-            currentUser={currentUser}
-            savedArticles={savedArticles}
-            onDeleteClick={handleDeleteArticle}
+            tickers={savedTickers}
+            onUpdateNote={handleUpdateNote}
+            onDelete={handleDeleteTicker}
           />
         </ProtectedRoute>
       </Switch>
+
       <Footer />
+
       <LoginModal
         isOpen={activeModal === 'login'}
         onClose={closeModal}
