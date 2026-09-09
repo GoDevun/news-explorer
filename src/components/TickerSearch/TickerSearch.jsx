@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import {
   EMPTY_TICKER_ERROR_MESSAGE,
-  INVALID_TICKER_ERROR_MESSAGE,
+  MAX_QUERY_LENGTH,
   POPULAR_TICKERS,
-  TICKER_PATTERN,
 } from '../../utils/constants';
 import './TickerSearch.css';
 
@@ -21,20 +20,17 @@ function TickerSearch({ onSearch, variant = 'hero', initialTicker = '' }) {
     setSearchValue(initialTicker);
   }, [initialTicker]);
 
+  // A ticker or a company name both work; the API resolves whichever it is.
   const submitTicker = (value) => {
-    const ticker = value.trim().toUpperCase();
+    const query = value.trim();
 
-    if (!ticker) {
+    if (!query) {
       setFormError(EMPTY_TICKER_ERROR_MESSAGE);
-      return;
-    }
-    if (!TICKER_PATTERN.test(ticker)) {
-      setFormError(INVALID_TICKER_ERROR_MESSAGE);
       return;
     }
 
     setFormError('');
-    onSearch(ticker);
+    onSearch(query);
   };
 
   const handleSubmit = (event) => {
@@ -66,14 +62,15 @@ function TickerSearch({ onSearch, variant = 'hero', initialTicker = '' }) {
           className="ticker-search__input"
           type="text"
           name="ticker"
-          aria-label="Ticker symbol"
-          placeholder={isCompact ? 'Search another ticker' : 'Enter ticker, e.g. AAPL'}
+          aria-label="Ticker symbol or company name"
+          placeholder={
+            isCompact ? 'Search another company' : 'Ticker or company name, e.g. AAPL or Netflix'
+          }
           autoComplete="off"
-          autoCapitalize="characters"
           spellCheck="false"
-          maxLength={10}
+          maxLength={MAX_QUERY_LENGTH}
           value={searchValue}
-          onChange={(event) => setSearchValue(event.target.value.toUpperCase())}
+          onChange={(event) => setSearchValue(event.target.value)}
           required
         />
         <button className="ticker-search__button" type="submit">

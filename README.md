@@ -13,8 +13,9 @@ individually. Sign in to keep a watchlist of tickers with your own notes.
 ## Live demo
 
 - **Frontend:** https://godevun.github.io/stock-news-sentiment/
-- **API:** hosted separately, because GitHub Pages serves static files only and
-  cannot run a Node process or a database.
+- **API:** https://stock-news-sentiment-api-v6pc.onrender.com
+  (hosted separately, because GitHub Pages serves static files only and cannot
+  run a Node process or a database)
 
 ## Features
 

@@ -5,11 +5,21 @@ import { HttpError, UpstreamError } from '../utils/errors.js';
 import { config } from '../config.js';
 import { dbState } from '../db.js';
 
-const buildPayload = (symbol, { articles, quota, found }) => ({
-  symbol,
-  summary: summarize(articles),
-  articles,
-  meta: { fetchedAt: new Date().toISOString(), quota: quota || null, found: found || 0 },
+const buildPayload = (query, result) => ({
+  symbol: result.symbol || query,
+  query,
+  // How the feed was found: an exact ticker, a name we resolved to a ticker,
+  // or a free-text search. The UI tells the user which.
+  matchedBy: result.matchedBy,
+  entityName: result.entityName || '',
+  keyword: result.keyword || '',
+  summary: summarize(result.articles),
+  articles: result.articles,
+  meta: {
+    fetchedAt: new Date().toISOString(),
+    quota: result.quota || null,
+    found: result.found || 0,
+  },
 });
 
 /**
@@ -21,7 +31,8 @@ const buildPayload = (symbol, { articles, quota, found }) => ({
  * degrade the page, not break it.
  */
 export const getNewsBySymbol = async (req, res, next) => {
-  const symbol = String(req.query.symbol || '').trim().toUpperCase();
+  const query = String(req.query.symbol || '').trim();
+  const symbol = query.toUpperCase();
 
   if (!config.marketaux.apiKey) {
     next(new UpstreamError('The news provider is not configured on the server'));
@@ -35,7 +46,7 @@ export const getNewsBySymbol = async (req, res, next) => {
   }
 
   try {
-    const result = await fetchScoredNews(symbol);
+    const result = await fetchScoredNews(query);
     const payload = buildPayload(symbol, result);
     newsCache.set(symbol, payload);
     res.send({ ...payload, meta: { ...payload.meta, cached: false, stale: false } });

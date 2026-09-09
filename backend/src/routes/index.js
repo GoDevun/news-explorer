@@ -18,7 +18,8 @@ router.get(
   newsLimiter,
   celebrate({
     [Segments.QUERY]: Joi.object().keys({
-      symbol: Joi.string().required().uppercase().max(10).pattern(/^[A-Z][A-Z.-]{0,9}$/),
+      // A ticker or a company name; the service resolves whichever it is.
+      symbol: Joi.string().required().trim().min(1).max(40),
     }),
   }),
   getNewsBySymbol

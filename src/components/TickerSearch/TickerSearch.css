@@ -38,14 +38,10 @@
   border-radius: 100px;
   font-size: 16px;
   line-height: 24px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
   color: #1a1b22;
 }
 
 .ticker-search__input::placeholder {
-  letter-spacing: normal;
-  text-transform: none;
   color: #b6bcbf;
 }
 

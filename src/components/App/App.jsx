@@ -24,18 +24,23 @@ const CARDS_PER_PAGE = 6;
  * Reads the ticker out of the route so results are linkable and the browser's
  * back button works, and refetches whenever the symbol in the URL changes.
  */
-function ResultsRoute({ onLoadFeed, savedTickers, ...props }) {
+function ResultsRoute({ onLoadFeed, savedTickers, feed, ...props }) {
   const { ticker } = useParams();
-  const symbol = ticker.toUpperCase();
+  const query = decodeURIComponent(ticker);
 
   useEffect(() => {
-    onLoadFeed(symbol);
-  }, [symbol, onLoadFeed]);
+    onLoadFeed(query);
+  }, [query, onLoadFeed]);
+
+  // Save state follows the resolved symbol, not what was typed: searching
+  // "netflix" and saving it should mark NFLX as saved.
+  const resolvedSymbol = (feed && feed.symbol) || query.toUpperCase();
 
   return (
     <SearchResults
-      symbol={symbol}
-      isSaved={savedTickers.some((item) => item.symbol === symbol)}
+      symbol={query}
+      feed={feed}
+      isSaved={savedTickers.some((item) => item.symbol === resolvedSymbol)}
       {...props}
     />
   );
@@ -83,9 +88,9 @@ function App() {
   }, []);
 
   /** Navigating is the search: the route owns the ticker, the effect fetches. */
-  const handleSearch = (ticker) => {
-    localStorage.setItem(LAST_TICKER_STORAGE_KEY, ticker);
-    history.push(`/search/${ticker}`);
+  const handleSearch = (query) => {
+    localStorage.setItem(LAST_TICKER_STORAGE_KEY, query);
+    history.push(`/search/${encodeURIComponent(query)}`);
   };
 
   const loadFeed = useCallback((symbol) => {

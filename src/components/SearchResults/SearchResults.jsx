@@ -51,6 +51,23 @@ function SearchResults({
           </div>
         )}
 
+        {!isLoading && !error && feed && hasArticles && feed.matchedBy !== 'symbol' && (
+          <p className="results__match-note">
+            {feed.matchedBy === 'name' ? (
+              <>
+                Matched <b>{feed.query}</b> to <b>{feed.symbol}</b>
+                {feed.entityName ? ` — ${feed.entityName}` : ''}.
+              </>
+            ) : (
+              <>
+                No articles are tagged <b>{feed.symbol}</b>, so these are stories
+                mentioning <b>{feed.keyword || feed.query}</b>. Headline scores still
+                apply; per-company sentiment from the provider may not.
+              </>
+            )}
+          </p>
+        )}
+
         {!isLoading && !error && feed && hasArticles && (
           <div className="results__panels">
             <SentimentSummary

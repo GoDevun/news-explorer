@@ -53,18 +53,9 @@ const readQuota = (response) => {
   return null;
 };
 
-const fetchPage = async (symbol, page) => {
-  const params = new URLSearchParams({
-    symbols: symbol,
-    filter_entities: 'true',
-    language: 'en',
-    page: String(page),
-    api_token: config.marketaux.apiKey,
-  });
-
-  const response = await requestWithTimeout(
-    `${config.marketaux.baseUrl}/news/all?${params}`
-  );
+const callApi = async (path, params) => {
+  const search = new URLSearchParams({ ...params, api_token: config.marketaux.apiKey });
+  const response = await requestWithTimeout(`${config.marketaux.baseUrl}${path}?${search}`);
 
   if (response.status === 401 || response.status === 403) {
     throw new UpstreamError('The news provider rejected the API key');
@@ -90,10 +81,36 @@ const fetchPage = async (symbol, page) => {
   }
 
   return {
-    articles: Array.isArray(body && body.data) ? body.data : [],
+    data: Array.isArray(body && body.data) ? body.data : [],
     meta: (body && body.meta) || {},
     quota: readQuota(response),
   };
+};
+
+const fetchPage = (query, page) =>
+  callApi('/news/all', { ...query, language: 'en', page: String(page) });
+
+/**
+ * Maps a free-text query to entities Marketaux knows about, so "netflix"
+ * can become NFLX. US listings are preferred; the endpoint also returns
+ * every foreign cross-listing of the same company.
+ */
+export const searchEntities = async (query) => {
+  const { data } = await callApi('/entity/search', { search: query });
+
+  const scored = data
+    .filter((entity) => entity && entity.symbol)
+    .map((entity) => ({
+      symbol: entity.symbol,
+      name: entity.name || '',
+      country: entity.country || '',
+      type: entity.type || '',
+      // Plain US symbols carry no exchange suffix; prefer those.
+      rank: (entity.country === 'us' ? 0 : 2) + (entity.symbol.includes('.') ? 1 : 0),
+    }))
+    .sort((a, b) => a.rank - b.rank);
+
+  return scored;
 };
 
 /** Picks the entity for the ticker we asked about, tolerating a missing array. */
@@ -177,18 +194,18 @@ export const normalizeArticle = (raw, symbol) => {
  * articles per request. Pages that fail after the first are skipped rather
  * than failing the whole lookup.
  */
-export const fetchScoredNews = async (symbol) => {
+const fetchPages = async (query, symbol, maxPages) => {
   const seen = new Set();
   const articles = [];
   let quota = null;
   let found = 0;
 
-  for (let page = 1; page <= config.marketaux.pagesPerLookup; page += 1) {
+  for (let page = 1; page <= maxPages; page += 1) {
     let result;
     try {
       // Pages are intentionally sequential: the free plan is request-limited,
       // so bailing out early on an empty page saves quota.
-      result = await fetchPage(symbol, page);
+      result = await fetchPage(query, page);
     } catch (error) {
       if (page === 1) {
         throw error;
@@ -199,7 +216,7 @@ export const fetchScoredNews = async (symbol) => {
     quota = result.quota || quota;
     found = result.meta.found || found;
 
-    result.articles.forEach((raw) => {
+    result.data.forEach((raw) => {
       const article = normalizeArticle(raw, symbol);
       if (article && !seen.has(article.url)) {
         seen.add(article.url);
@@ -207,7 +224,7 @@ export const fetchScoredNews = async (symbol) => {
       }
     });
 
-    if (!result.articles.length) {
+    if (!result.data.length) {
       break;
     }
   }
@@ -215,4 +232,76 @@ export const fetchScoredNews = async (symbol) => {
   articles.sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1));
 
   return { articles, quota, found };
+};
+
+/**
+ * Resolves whatever the user typed into a feed.
+ *
+ * Marketaux tags articles to entities, but its entity coverage is narrower
+ * than its news coverage: "QBTS" returns nothing while a free-text search for
+ * "D-Wave" returns thousands. And people type company names, not tickers. So
+ * the lookup widens in stages, stopping at the first that yields articles:
+ *
+ *   1. the query as a ticker symbol   - precise, carries provider sentiment
+ *   2. a symbol resolved from the name - "netflix" becomes NFLX
+ *   3. a free-text search              - catches everything else
+ *
+ * Each stage costs quota, so a stage that returns nothing bails after one page.
+ */
+export const fetchScoredNews = async (rawQuery) => {
+  const query = rawQuery.trim();
+  const upper = query.toUpperCase();
+  const looksLikeTicker = /^[A-Z][A-Z.-]{0,9}$/.test(upper);
+
+  if (looksLikeTicker) {
+    const bySymbol = await fetchPages(
+      { symbols: upper, filter_entities: 'true' },
+      upper,
+      config.marketaux.pagesPerLookup
+    );
+    if (bySymbol.articles.length) {
+      return { ...bySymbol, symbol: upper, matchedBy: 'symbol', entityName: '' };
+    }
+  }
+
+  let resolved = null;
+  try {
+    const entities = await searchEntities(query);
+    resolved = entities.find((entity) => entity.symbol.toUpperCase() !== upper) || null;
+  } catch {
+    resolved = null;
+  }
+
+  if (resolved) {
+    const byResolved = await fetchPages(
+      { symbols: resolved.symbol, filter_entities: 'true' },
+      resolved.symbol,
+      config.marketaux.pagesPerLookup
+    );
+    if (byResolved.articles.length) {
+      return {
+        ...byResolved,
+        symbol: resolved.symbol.toUpperCase(),
+        entityName: resolved.name,
+        matchedBy: 'name',
+        resolvedFrom: query,
+      };
+    }
+  }
+
+  // Last resort: the company name if we found one, otherwise what was typed.
+  const keyword = (resolved && resolved.name) || query;
+  const byKeyword = await fetchPages(
+    { search: `"${keyword}"` },
+    upper,
+    Math.min(2, config.marketaux.pagesPerLookup)
+  );
+
+  return {
+    ...byKeyword,
+    symbol: upper,
+    entityName: (resolved && resolved.name) || '',
+    matchedBy: 'keyword',
+    keyword,
+  };
 };

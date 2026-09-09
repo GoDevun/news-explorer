@@ -3,7 +3,7 @@
 # of its own; the Pages frontend then points at it via VITE_API_BASE_URL.
 services:
   - type: web
-    name: stock-news-sentiment-api
+    name: stock-news-sentiment-api-v6pc
     runtime: node
     plan: free
     rootDir: backend

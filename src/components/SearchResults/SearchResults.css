@@ -23,6 +23,16 @@
   padding: 40px 104px 80px;
 }
 
+.results__match-note {
+  margin: 0 0 20px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  background-color: #eef3fd;
+  font-size: 15px;
+  line-height: 21px;
+  color: #29416b;
+}
+
 .results__panels {
   display: flex;
   flex-direction: column;
@@ -91,7 +101,17 @@
     padding: 24px 16px 32px;
   }
 
-  .results__panels {
+  .results__match-note {
+  margin: 0 0 20px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  background-color: #eef3fd;
+  font-size: 15px;
+  line-height: 21px;
+  color: #29416b;
+}
+
+.results__panels {
     gap: 16px;
   }
 }
